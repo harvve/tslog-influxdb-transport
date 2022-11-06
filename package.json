@@ -1,6 +1,6 @@
 {
   "name": "@harvve/tslog-influxdb-transport",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Send logs to influxdb2 via telegraf without writing them to files.",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -8,7 +8,7 @@
     "lib/**/*"
   ],
   "scripts": {
-    "test": "mocha --config .mocharc.js",
+    "test": "mocha --config .mocharc.js --exit",
     "test:watch": "mocha --watch --config .mocharc.js",
     "precoverage": "rimraf .nyc_output coverage",
     "coverage": "nyc mocha --config .mocharc.js --exit",

@@ -93,7 +93,8 @@ export class Transporter {
   }
 
   private transport(message: ILogObject): void {
-    const msg = Buffer.from(this.prepareMessage(message));
+    const preparedMsg = this.prepareMessage(message);
+    const msg = Buffer.from(preparedMsg);
     this.socket.send(msg, 0, msg.length, this.options.port, this.options.address || 'localhost');
   }
 
