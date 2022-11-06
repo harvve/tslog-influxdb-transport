@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "lib": ["ES6", "es2017"],
+    "target": "ES2017",
+    "rootDir": "./src",
+    "module": "CommonJS",
+    "outDir": "lib",
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "allowJs": false,
+    "declaration": true,
+    "removeComments": false,
+    "types": ["tslog"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}

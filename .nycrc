@@ -1,0 +1,8 @@
+{
+  "all": true,
+  "check-coverage": true,
+  "extension": [".ts"],
+  "include": ["src"],
+  "exclude": ["node_modules", "__tests__", "src/index.ts"],
+  "reporter": ["text", "json"]
+}
