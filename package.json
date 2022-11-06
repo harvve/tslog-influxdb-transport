@@ -1,7 +1,7 @@
 {
   "name": "@harvve/tslog-influxdb-transport",
-  "version": "1.0.0",
-  "description": "Send logs to influxdb2 using telegraf without writing them to files.",
+  "version": "1.0.1",
+  "description": "Send logs to influxdb2 via telegraf without writing them to files.",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [

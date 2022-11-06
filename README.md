@@ -1,5 +1,5 @@
 # tslog-influxdb-transport
-> Send logs to influxdb2 using telegraf without writing them to files.
+> Send logs to influxdb2 via telegraf without writing them to files.
 
 <a name="readme-top"></a>
 
@@ -30,7 +30,8 @@
 <br>
 
 ## About The Project
-This library provides a transporter to configure and send logs from tslog via telegraph directly to [InfluxDB2](https://docs.influxdata.com/influxdb/v2.5/). This allows aggregation of the logs in one place in this case in [InfluxDB2](https://docs.influxdata.com/influxdb/v2.5/). Stored log data can be visualized in the InfluxDB2 UI and alerts can be set thanks to the built-in `Chronograf` and `Kapacitor` tools.
+
+This library provides a transporter to configure and send logs from tslog via telegraph directly to [InfluxDB2](https://docs.influxdata.com/influxdb/v2.5/). This allows you to aggregate the logs in one place in this case in InfluxDB2. The stored log data can be [visualized](https://docs.influxdata.com/influxdb/v2.5/visualize-data/) and [alerts](https://docs.influxdata.com/influxdb/v2.5/monitor-alert/) can be set up in the InfluxDB2 UI with the built-in Chronograf and Kapacitor tools.
 
 ### Installation
 
