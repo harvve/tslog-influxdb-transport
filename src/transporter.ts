@@ -1,26 +1,8 @@
+import { format } from 'util';
 import { createSocket, Socket, SocketType } from 'dgram';
 import { TTransportLogger, ILogObject, TLogLevelName } from 'tslog';
-import { flatArr } from './flat-arr';
 
-export type AvailableTagKeys = Pick<
-  ILogObject,
-  | 'instanceName'
-  | 'loggerName'
-  | 'hostname'
-  | 'requestId'
-  | 'logLevel'
-  | 'filePath'
-  | 'fullFilePath'
-  | 'fileName'
-  | 'functionName'
-  | 'typeName'
-  | 'methodName'
->;
-
-export type AvailableFieldKeys = Pick<
-  ILogObject,
-  'argumentsArray' | 'columnNumber' | 'date' | 'isConstructor' | 'lineNumber' | 'logLevelId'
->;
+export type AvailableKeys = Omit<ILogObject, 'toJSON' | 'stack'>;
 
 export interface ITransporterOptions {
   /** Name of measurement */
@@ -34,9 +16,9 @@ export interface ITransporterOptions {
   /** Minimum logging level to transport - default 'debug' */
   minLevel?: TLogLevelName;
   /** List of field keys - If no keys are provided, the default ones will be used */
-  fieldKeys?: Array<keyof (AvailableTagKeys & AvailableFieldKeys)>;
+  fieldKeys?: Array<keyof AvailableKeys>;
   /** List of tag keys - with string value only - If keys are not specified, default ones will be used */
-  tagKeys?: Array<keyof AvailableTagKeys>;
+  tagKeys?: Array<keyof AvailableKeys>;
 }
 
 export interface ITransportProvider {
@@ -46,15 +28,14 @@ export interface ITransportProvider {
 
 export class Transporter {
   private socket: Socket;
-  private readonly DEFAULT_FIELD_KEYS: Array<keyof AvailableFieldKeys> = [
-    'argumentsArray',
-    'columnNumber',
-    'isConstructor',
-    'lineNumber',
-    'logLevelId'
-  ];
-  private readonly DEFAULT_TAG_KEYS: Array<keyof AvailableTagKeys> = [
+  private readonly MATCH_SPECIAL_CHARS: RegExp = /[\n|\'|\{|\}|/|\[|\]|,]/gm;
+  private readonly MATCH_TWO_OR_MORE_SPACES: RegExp = /\s{2,}/gm;
+  private readonly SKIP_SPACES_PATTERN: RegExp = /\s/gm;
+  private readonly SKIP_SPACES_REPLACEMENT: string = '\\ ';
+  private readonly DEFAULT_FIELD_KEYS: Array<keyof AvailableKeys> = ['columnNumber', 'lineNumber', 'logLevelId'];
+  private readonly DEFAULT_TAG_KEYS: Array<keyof AvailableKeys> = [
     'fileName',
+    'isConstructor',
     'filePath',
     'fullFilePath',
     'functionName',
@@ -64,13 +45,39 @@ export class Transporter {
     'loggerName',
     'methodName',
     'requestId',
-    'typeName'
+    'typeName',
+    'argumentsArray'
   ];
 
   constructor(private options: ITransporterOptions) {
     if (!this.options.measurementName) {
       throw new Error('You need to provide measurementName !');
     }
+
+    if (this.options.tagKeys?.length && !this.options?.fieldKeys?.length) {
+      throw this.errorIfOnlyOneListProvided('tagKeys', 'fieldKeys');
+    }
+
+    if (this.options.fieldKeys?.length && !this.options?.tagKeys?.length) {
+      throw this.errorIfOnlyOneListProvided('fieldKeys', 'tagKeys');
+    }
+
+    if (this.options.fieldKeys?.length && this.options?.tagKeys?.length) {
+      for (const itr of this.options.fieldKeys) {
+        if (this.options.tagKeys.includes(itr)) {
+          throw new Error(`Keys cannot be duplicated! (duplicated: ${itr})`);
+        }
+      }
+    }
+
+    if (!this.options.tagKeys?.length) {
+      this.options.tagKeys = [...this.DEFAULT_TAG_KEYS];
+    }
+
+    if (!this.options.fieldKeys?.length) {
+      this.options.fieldKeys = [...this.DEFAULT_FIELD_KEYS];
+    }
+
     this.socket = createSocket(this.options.socketType);
   }
 
@@ -99,50 +106,52 @@ export class Transporter {
   }
 
   private prepareMessage(message: ILogObject): string {
-    const tags = this.prepareTags(message);
-    const fields = this.prepareFields(message);
-    return `${this.options.measurementName}${tags}${fields}`;
+    const tags = this.prepareEntries(message, this.options.tagKeys || []);
+    const fields = this.prepareEntries(message, this.options.fieldKeys || []);
+    return `${this.options.measurementName},${tags} ${fields}`;
   }
 
-  private prepareTags(message: ILogObject): string {
-    const fields = [...(this.options?.tagKeys || this.DEFAULT_TAG_KEYS)];
+  private prepareEntries(message: ILogObject, entries: string[]): string {
     const keyValuePairs = Object.entries(message)
-      .filter(([key]) => fields.includes(key as keyof AvailableTagKeys))
-      .map(([key, value]) => {
-        if (typeof value === 'undefined') {
-          return `${key}="unknown"`;
-        }
-        return `${key}="${value}"`;
-      })
-      .join(',');
-    return `,${keyValuePairs}`;
-  }
-
-  private prepareFields(message: ILogObject): string {
-    const fields = [...(this.options?.fieldKeys || this.DEFAULT_FIELD_KEYS)];
-    const keyValuePairs = Object.entries(message)
-      .filter(([key]) => fields.includes(key as keyof AvailableFieldKeys))
+      .filter(([key]) => entries.includes(key as keyof AvailableKeys))
       .map(([key, value]) => {
         if (typeof value === 'undefined') {
           value = 'unknown';
-        }
-
-        if (typeof value === 'string') {
-          return `${key}="${value}"`;
         }
 
         if (typeof value === 'object' && !Array.isArray(value)) {
           value = [value];
         }
 
+        if (typeof value === 'string') {
+          value = value
+            .trim()
+            .replace(this.MATCH_TWO_OR_MORE_SPACES, ' ')
+            .replace(this.SKIP_SPACES_PATTERN, this.SKIP_SPACES_REPLACEMENT);
+        }
+
         if (Array.isArray(value)) {
-          value = flatArr(value);
-          return `${key}="${value.join(',')}"`;
+          return (
+            `${key}=` +
+            format(...value)
+              .replace(this.MATCH_SPECIAL_CHARS, '')
+              .replace(this.MATCH_TWO_OR_MORE_SPACES, ' ')
+              .trim()
+              .replace(this.SKIP_SPACES_PATTERN, this.SKIP_SPACES_REPLACEMENT)
+          );
         }
 
         return `${key}=${value}`;
       })
       .join(',');
-    return ` ${keyValuePairs}`;
+
+    return keyValuePairs;
+  }
+
+  private errorIfOnlyOneListProvided(
+    exist: keyof Pick<ITransporterOptions, 'tagKeys' | 'fieldKeys'>,
+    missing: keyof Pick<ITransporterOptions, 'tagKeys' | 'fieldKeys'>
+  ): Error {
+    return new Error(`If you provided ${exist} you must provide ${missing} as well`);
   }
 }
