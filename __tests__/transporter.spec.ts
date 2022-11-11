@@ -50,7 +50,7 @@ describe('transporter tests', () => {
   it('should properly prepare entries', () => {
     const tags = transporter['prepareEntries'](message1, transporter['DEFAULT_TAG_KEYS']);
     expect(tags).to.be.equal(
-      'instanceName=unknown,loggerName=MyLogger,hostname=msmikesm.local,requestId=unknown,logLevel=error,filePath=src/main.ts,fullFilePath=/pat/to/file/in/project/src/main.ts,fileName=main.ts,isConstructor=false,functionName=unknown,typeName=unknown,methodName=unknown,argumentsArray="Error occurred while started app,nativeError,ServerSelectionError,details,aa,bb,name,ServerSelectionError,isError,true,message,ECONNREFUSED,Helo,hello,aaa,bb,cc"'
+      'instanceName=unknown,loggerName=MyLogger,hostname=msmikesm.local,requestId=unknown,logLevel=error,filePath=src/main.ts,fullFilePath=/pat/to/file/in/project/src/main.ts,fileName=main.ts,isConstructor=false,functionName=unknown,typeName=unknown,methodName=unknown,argumentsArray=Error\\ occurred\\ while\\ started\\ app\\ nativeError:\\ ServerSelectionError\\ details:\\ aa:\\ bb\\ name:\\ ServerSelectionError\\ isError:\\ true\\ message:\\ ECONNREFUSED\\ Helo\\ hello:\\ aaa\\ Array'
     );
 
     const fields = transporter['prepareEntries'](
@@ -67,7 +67,7 @@ describe('transporter tests', () => {
   it('should properly prepare message for telegraf', () => {
     const result = transporter['prepareMessage'](message1);
     expect(result).to.be.equal(
-      `testMEA,instanceName=unknown,loggerName=MyLogger,hostname=msmikesm.local,requestId=unknown,logLevel=error,filePath=src/main.ts,fullFilePath=/pat/to/file/in/project/src/main.ts,fileName=main.ts,isConstructor=false,functionName=unknown,typeName=unknown,methodName=unknown,argumentsArray="Error occurred while started app,nativeError,ServerSelectionError,details,aa,bb,name,ServerSelectionError,isError,true,message,ECONNREFUSED,Helo,hello,aaa,bb,cc" logLevelId=5,lineNumber=29,columnNumber=12`
+      'testMEA,instanceName=unknown,loggerName=MyLogger,hostname=msmikesm.local,requestId=unknown,logLevel=error,filePath=src/main.ts,fullFilePath=/pat/to/file/in/project/src/main.ts,fileName=main.ts,isConstructor=false,functionName=unknown,typeName=unknown,methodName=unknown,argumentsArray=Error\\ occurred\\ while\\ started\\ app\\ nativeError:\\ ServerSelectionError\\ details:\\ aa:\\ bb\\ name:\\ ServerSelectionError\\ isError:\\ true\\ message:\\ ECONNREFUSED\\ Helo\\ hello:\\ aaa\\ Array logLevelId=5,lineNumber=29,columnNumber=12'
     );
   });
 
